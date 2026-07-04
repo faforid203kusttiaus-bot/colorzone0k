@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>VIP Prediction Pro</title>
+    
+    <!-- Tailwind CSS, SweetAlert2, FontAwesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* আপনার বটের অরিজিনাল স্টাইল (অপরিবর্তিত) */
+        :root{
+          --primary-bot:#6c63ff;
+          --green:#2cff6a;
+          --red:#ff3b3b;
+          --yellow:#ffcc00;
+          --violet:#b624ff;
+          --dark-bg: #000;
+          --card-bg: #111;
+        }
+        
+        body {
+            font-family: 'Inter', 'Poppins', 'Hind Siliguri', sans-serif;
+            background-color: var(--dark-bg);
+            color: #fff;
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        input {
+            width: 100%;
+            background: #1a1a1a !important;
+            border: 1px solid #333 !important;
+            border-radius: 12px !important;
+            padding: 12px 16px !important;
+            color: white !important;
+            margin-bottom: 12px;
+        }
+
+        .btn-auth {
+            background: var(--primary-bot);
+            border-radius: 12px;
+            padding: 14px;
+            width: 100%;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* বটের সার্কেল ও অন্যান্য স্পেসিফিক স্টাইল */
+        .circle{
+          width:260px; height:260px; margin:20px auto; border-radius:50%;
+          background:#111; display:flex; flex-direction:column; justify-content:center;
+          align-items:center; box-shadow:0 0 35px var(--primary-bot); position: relative;
+        }
+        .number{ font-size:45px; font-weight:800; margin-bottom:0px; }
+        .signal{ font-size:26px; font-weight:700; margin-bottom: 5px; }
+        .color-badge { padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; text-transform: uppercase; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); display: none; }
+        .confidence{ margin-top:10px; font-size:12px; color:#bbb; }
+        .bar { height:6px; width: 100px; background:#000; border-radius:6px; margin: 5px auto; overflow:hidden; }
+        .bar-fill{ height:100%; width:0%; background:var(--primary-bot); transition:width .6s ease; }
+        .live{ font-size:13px; margin-bottom:10px; animation:blink 1.2s infinite; color: #fff; text-align: center;}
+        @keyframes blink{50%{opacity:.4}}
+        @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
+        .pulse{animation:pulse .6s ease-out}
+        .info-bot{ display:flex; justify-content:space-between; margin:20px 10px; font-size:14px; }
+        .signal-history{ margin-top:20px; background:#0f0f0f; border-radius:14px; padding:15px; }
+        .history-title{ font-size:13px; color:#aaa; margin-bottom:10px; }
+        .history-box{ display:flex; gap:6px; justify-content:center; }
+        .history-item{ padding:6px 10px; border-radius:12px; font-size:12px; font-weight:700; }
+        .big{color:var(--green);background:rgba(44,255,106,.15)}
+        .small{color:var(--red);background:rgba(255,59,59,.15)}
+
+        /* ইমেজ ও অন্যান্য ড্যাশবোর্ড স্টাইল */
+        .main-promo-img { width: 100%; border-radius: 18px; border: 1px solid #333; margin-bottom: 15px; }
+        .grid-thumb { width: 100%; height: 80px; object-fit: cover; border-radius: 12px; border: 1px solid #333; }
+        .site-btn { background: #1a1a1a; border: 1px solid #333; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;}
+        .tg-link { color: #38bdf8; font-weight: bold; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; margin-top: 15px;}
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <!-- 1. Authentication -->
+    <div id="auth-section" class="flex flex-col justify-center min-h-screen">
+        <div class="glass-card">
+            <h2 id="auth-title" class="text-2xl font-bold text-center mb-6 text-purple-400">VIP Pro Account</h2>
+            <div id="reg-fields">
+                <input type="text" id="reg-name" placeholder="আপনার নাম">
+            </div>
+            <input type="email" id="user-email" placeholder="ইমেইল এড্রেস">
+            <input type="password" id="user-pass" placeholder="পাসওয়ার্ড">
+            <button class="btn-auth" onclick="handleAuth()">প্রবেশ করুন</button>
+            <p class="text-center mt-6 text-gray-400 text-xs" onclick="toggleAuth()">
+                <span id="toggle-text">একাউন্ট নেই? <b class="text-purple-400">রেজিস্ট্রেশন করুন</b></span>
+            </p>
+        </div>
+    </div>
+
+    <!-- 2. Image Dashboard & UID Submission -->
+    <div id="user-section" class="hidden space-y-4 pt-4">
+        <div class="text-center mb-4">
+            <h2 class="text-xl font-bold text-purple-400">VIP Access Dashboard</h2>
+        </div>
+
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg56EdEaD6geDlVphDAM5wjqQknzGBE0aqtS5OPhMgLqWkkzxrHmRD9MCLAPzgufA2s-lybEaXy8laEmfu4m7n1OZkrYM3i3wqXLyIeILERUqiVRL49_dDLdyd5LJyXcXDfUfXcC9UMSV1h93bu9qSIPLZTUbXkHy0DYPK6ZktrSMC4Bw3sRF-bvl2Bn_s/s462/Screenshot%202026-07-04%20003508.png" class="main-promo-img" alt="Promo">
+
+        <div class="grid grid-cols-3 gap-2">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgX5trepx2ezwuINc2u9of77r2V4ax5WL0gT2pSNLCEKz-Au96ywWT6ccjG793pFP72R92lvEOXD7EqrJ1tDkUlHC8LFy81hBr1XX-B6Ky2BzKBEd1x8Ru5uP9Jr3xGIbO4miXWQ36P9k_KE8fgYs9Kyg4R1Na0Fmc0Wx1cKqLId-kY_1Cp0OYcsBpKuCg/s447/images%20%281%29.jpg" class="grid-thumb">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiuTRYnW88aJHYwbls43LVjOz6ywljWSu4Oh9iGXl2gq4_q3EzAwvimMkNkeHznQ0vXJeJp1Z9SrAv17N6T3tfwrjEp6ixV8CFDA-cKRys1-PQKTjjzn5BqlvD6KXnHJr079QG7Sq6JAzJTzGgpMPubJPw9AtdXM6mx4VH3HhM7Ywe78XF1X160_gyNJ7k/s512/images%20%282%29.jpg" class="grid-thumb">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_QqdsUtAFBOzS1xTqaA8HPLaLPlft3xRJm7qACXDo3D0dxq_Jw-UEDzskeuu24OQyBfo6DGSZsZNuziMBGCI68q0dAx5iZUjy3rIVvdKclTeKyumR4SXMRqNqKL85VxBihHhS6-63Mu-2xVOFzdxqhF7aJlBslD39smGATGFT2MkQRIfEd-fWqJ4MMRA/s447/images.jpg" class="grid-thumb">
+        </div>
+
+        <div class="space-y-2">
+            <a href="https://amarclub1.com/#/register?invitationCode=188821553993" target="_blank" class="site-btn"><span>Amar Club</span><i class="fas fa-external-link-alt text-gray-600"></i></a>
+            <a href="https://dkwin9.com/#/register?invitationCode=22738777260" target="_blank" class="site-btn"><span>DX Win</span><i class="fas fa-external-link-alt text-gray-600"></i></a>
+            <a href="https://hgnice.org/#/register?invitationCode=848371495376" target="_blank" class="site-btn"><span>HG Nice</span><i class="fas fa-external-link-alt text-gray-600"></i></a>
+        </div>
+
+        <div id="uid-input-area" class="glass-card">
+            <p class="text-[11px] font-bold mb-3 text-gray-400 uppercase">বট এক্সেস পেতে আপনার UID দিন</p>
+            <input type="text" id="user-uid" placeholder="Example: 5498321">
+            <button class="btn-auth" onclick="submitUID()">সাবমিট করুন</button>
+        </div>
+
+        <div id="status-box" class="hidden glass-card text-center border-yellow-500/20">
+            <p id="status-display-text" class="text-yellow-500 text-sm font-bold animate-pulse">Status: Pending Approval...</p>
+            <a href="https://t.me/forid0ksupport" target="_blank" class="tg-link"><i class="fab fa-telegram mr-2"></i> Contact Admin Support</a>
+        </div>
+    </div>
+
+    <!-- 3. BOT SECTION (আপনার দেওয়া বটের HTML) -->
+    <div id="bot-section" class="hidden">
+        <div class="flex justify-between items-center mb-4">
+            <div class="live">🟢 Live Server Connected</div>
+            <button onclick="showCalc()" class="bg-purple-600/20 text-purple-400 px-3 py-1 rounded text-[10px] font-bold border border-purple-600/30 uppercase tracking-widest">Management</button>
+        </div>
+
+        <div class="circle">
+          <div id="number" class="number">--</div>
+          <div id="signal" class="signal">READY</div>
+          <div id="colorBadge" class="color-badge">COLOR</div>
+          <div id="confidence" class="confidence">Confidence: --</div>
+          <div class="bar"><div id="confBar" class="bar-fill"></div></div>
+        </div>
+
+        <div class="info-bot">
+          <div>Next Period<br><strong id="period">------</strong></div>
+          <div>Time Left<br><strong id="time">30s</strong></div>
+        </div>
+
+        <button id="btn-bot" class="btn-auth mb-6" style="background: var(--primary-bot)">Generate Prediction</button>
+
+        <div class="signal-history">
+          <div class="history-title">Signal History</div>
+          <div id="historyBox" class="history-box"></div>
+        </div>
+
+        <div class="text-center mt-10">
+            <a href="https://t.me/forid0ksupport" target="_blank" class="tg-link"><i class="fab fa-telegram mr-2"></i> Join Our Telegram</a>
+        </div>
+    </div>
+
+    <!-- 4. CALCULATOR -->
+    <div id="calc-section" class="hidden space-y-4 pt-4 pb-20">
+        <div class="flex items-center mb-4">
+            <button onclick="showBot()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center mr-4"><i class="fas fa-chevron-left text-xs"></i></button>
+            <h2 class="text-xl font-bold">Money Management</h2>
+        </div>
+        <div class="glass-card space-y-4">
+            <div><label class="text-[10px] text-gray-500 font-bold uppercase">Capital (৳)</label><input type="number" id="balance-input" value="300" class="!mb-0"></div>
+            <div><label class="text-[10px] text-gray-500 font-bold uppercase">Divide Steps</label><input type="number" id="steps-input" value="5" max="10" min="1" class="!mb-0"></div>
+            <button onclick="calculateSteps()" class="btn-auth">Calculate</button>
+        </div>
+        <div id="calc-results" class="space-y-2"></div>
+    </div>
+
+</div>
+
+<!-- Audio for alert -->
+<audio id="alertSound"><source src="https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3"></audio>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+<script>
+    // আপনার ফায়ারবেজ কনফিগ
+    const firebaseConfig = {
+        apiKey: "AIzaSyDWDZqB87Ib6wwKWujmzfW1R0F-BFb1ouI",
+        authDomain: "colortrading-ab222.firebaseapp.com",
+        projectId: "colortrading-ab222",
+        storageBucket: "colortrading-ab222.firebasestorage.app",
+        messagingSenderId: "865130129536",
+        appId: "1:865130129536:web:3592e520783447d1751e65"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let isLogin = false;
+
+    // গাইডলাইন পপআপ
+    window.onload = () => {
+        Swal.fire({
+            title: 'গাইডলাইন!',
+            text: 'এটি হাই রিস্ক সাইট। মানি ম্যানেজমেন্ট ছাড়া ইনভেস্ট করবেন না।এবং অবশ্যই অ্যাকাউন্ট খোলার পরে আপনার উইথড্রো একাউন্টটি অবশ্যই অ্যাড করবেন নগদ এবং বিকাশ যেকোনো একটি এড করবেন। আমাদের সব স্টেপ মেনে চলুন। ধন্যবাদ।',
+            icon: 'info', background: '#111', color: '#fff', confirmButtonColor: '#6c63ff'
+        });
+    };
+
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('auth-title').innerText = isLogin ? "Member Login" : "Join VIP Team";
+        document.getElementById('reg-fields').classList.toggle('hidden', isLogin);
+        document.getElementById('toggle-text').innerHTML = isLogin ? "New user? <b class='text-purple-400'>Sign Up</b>" : "Already member? <b class='text-purple-400'>Login Here</b>";
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('user-email').value;
+        const pass = document.getElementById('user-pass').value;
+        const name = document.getElementById('reg-name').value || "Unknown User";
+        if(!email || !pass) return Swal.fire('Error', 'সবগুলো ঘর পূরণ করুন', 'error');
+        try {
+            if(isLogin) {
+                await auth.signInWithEmailAndPassword(email, pass);
+            } else {
+                const res = await auth.createUserWithEmailAndPassword(email, pass);
+                await db.collection("users").doc(res.user.uid).set({ name, email, uidStatus: "none", submittedUID: "" });
+            }
+        } catch (e) { alert(e.message); }
+    }
+
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('user-section').classList.remove('hidden');
+            db.collection("users").doc(user.uid).onSnapshot(doc => {
+                const data = doc.data();
+                const sBox = document.getElementById('status-box');
+                const sText = document.getElementById('status-display-text');
+                if(data.uidStatus === "pending") {
+                    sBox.classList.remove('hidden');
+                    document.getElementById('uid-input-area').classList.add('hidden');
+                    sText.innerText = "Status: Pending Approval...";
+                } else if(data.uidStatus === "approved") {
+                    document.getElementById('user-section').classList.add('hidden');
+                    document.getElementById('bot-section').classList.remove('hidden');
+                    initBotLogic(); // বটের মেইন লজিক স্টার্ট হবে
+                } else if(data.uidStatus === "declined") {
+                    sBox.classList.remove('hidden');
+                    document.getElementById('uid-input-area').classList.remove('hidden');
+                    sText.innerText = "Status: Declined! Try again.";
+                    sText.style.color = "red";
+                }
+            });
+        }
+    });
+
+    async function submitUID() {
+        const uid = document.getElementById('user-uid').value;
+        if(!uid) return;
+        await db.collection("users").doc(auth.currentUser.uid).update({ submittedUID: uid, uidStatus: "pending" });
+    }
+
+    function showCalc() { document.getElementById('bot-section').classList.add('hidden'); document.getElementById('calc-section').classList.remove('hidden'); calculateSteps(); }
+    function showBot() { document.getElementById('calc-section').classList.add('hidden'); document.getElementById('bot-section').classList.remove('hidden'); }
+
+    function calculateSteps() {
+        const bal = parseFloat(document.getElementById('balance-input').value);
+        const steps = parseInt(document.getElementById('steps-input').value);
+        const first = bal / (Math.pow(2, steps) - 1);
+        let curr = first; let html = '';
+        for(let i=1; i<=steps; i++) {
+            html += `<div class="glass-card !p-3 flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase">STEP ${i}</span>
+                        <span class="text-green-400 font-bold text-sm">${curr.toFixed(2)} ৳</span>
+                    </div>`;
+            curr *= 2;
+        }
+        document.getElementById('calc-results').innerHTML = html;
+    }
+
+    // --- আপনার বটের অরিজিনাল লজিক (হুবহু রাখা হয়েছে) ---
+    function initBotLogic() {
+        const API = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
+        let history = [], lastPeriod = "";
+        let signalHistory = [];
+
+        const getNextPeriod = p => p ? (BigInt(p) + 1n).toString() : "------";
+
+        async function fetchHistory() {
+          try {
+            const r = await fetch(API, { cache: "no-store" });
+            const j = await r.json();
+            if (j.code === 0) {
+              history = j.data.list;
+              lastPeriod = history[0].issueNumber;
+              document.getElementById('period').textContent = getNextPeriod(lastPeriod);
+            }
+          } catch (e) { }
+        }
+        fetchHistory();
+        setInterval(fetchHistory, 5000);
+
+        function predict() {
+          if (history.length < 10) return { signal: "WAITING", value: null };
+          const last10 = history.slice(0, 10).map(x => +x.number).reverse();
+          const diff = Math.abs((last10[0] + last10[1]) - (last10[8] + last10[9]));
+          const finalNum = diff % 10;
+          if (diff >= 10) return { signal: "WAITING", value: finalNum };
+          if (diff <= 4) return { signal: "SMALL", value: finalNum };
+          return { signal: "BIG", value: finalNum };
+        }
+
+        function renderHistory() {
+          const hBox = document.getElementById('historyBox');
+          hBox.innerHTML = "";
+          signalHistory.forEach(i => {
+            const d = document.createElement("div");
+            d.className = "history-item " + (i.signal === "BIG" ? "big" : "small");
+            d.textContent = i.signal;
+            hBox.appendChild(d);
+          });
+        }
+
+        document.getElementById('btn-bot').onclick = () => {
+          const res = predict();
+          const numElem = document.getElementById('number');
+          const sigElem = document.getElementById('signal');
+          const badge = document.getElementById('colorBadge');
+          const confElem = document.getElementById('confidence');
+          const barFill = document.getElementById('confBar');
+          const sound = document.getElementById('alertSound');
+
+          numElem.classList.remove("pulse");
+          void numElem.offsetWidth;
+
+          if (res.signal === "WAITING") {
+            sigElem.textContent = "WAITING";
+            sigElem.style.color = "var(--yellow)";
+            numElem.textContent = "--";
+            badge.style.display = "none";
+            return;
+          }
+
+          const next = getNextPeriod(lastPeriod);
+          signalHistory.unshift({ period: next, signal: res.signal });
+          if (signalHistory.length > 5) signalHistory.pop();
+
+          numElem.textContent = res.value;
+          sigElem.textContent = res.signal;
+          sigElem.style.color = res.signal === "BIG" ? "var(--green)" : "var(--red)";
+          
+          badge.style.display = "inline-block";
+          const num = res.value;
+          
+          if ([1, 3, 7, 9].includes(num)) {
+            badge.textContent = "GREEN"; badge.style.color = "var(--green)"; badge.style.background = "rgba(44,255,106,0.2)";
+          } else if ([2, 4, 6, 8].includes(num)) {
+            badge.textContent = "RED"; badge.style.color = "var(--red)"; badge.style.background = "rgba(255,59,59,0.2)";
+          } else if ([0, 5].includes(num)) {
+            badge.textContent = "VIOLET"; badge.style.color = "var(--violet)"; badge.style.background = "rgba(182,36,255,0.2)";
+          }
+
+          numElem.classList.add("pulse");
+          const conf = Math.min(99, 60 + res.value * 4);
+          confElem.textContent = "Confidence: " + conf + "%";
+          barFill.style.width = conf + "%";
+
+          if (conf >= 90) sound.play();
+          renderHistory();
+        };
+
+        setInterval(() => {
+          document.getElementById('time').textContent = (30 - (new Date().getSeconds() % 30)) + "s";
+        }, 1000);
+    }
+</script>
+
+</body>
+</html>
