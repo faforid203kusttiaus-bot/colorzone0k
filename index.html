@@ -1,406 +1,374 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>VIP Prediction Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MasterMind VIP | Cyber Analytics</title>
     
-    <!-- Tailwind CSS, SweetAlert2, FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: { brand: '#0ea5e9', dark: '#030712', card: 'rgba(17, 24, 39, 0.7)' }
+                }
+            }
+        }
+    </script>
+
     <style>
-        /* আপনার বটের অরিজিনাল স্টাইল (অপরিবর্তিত) */
-        :root{
-          --primary-bot:#6c63ff;
-          --green:#2cff6a;
-          --red:#ff3b3b;
-          --yellow:#ffcc00;
-          --violet:#b624ff;
-          --dark-bg: #000;
-          --card-bg: #111;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        .glass { @apply backdrop-blur-xl border border-white/5 dark:bg-card bg-white/80 shadow-2xl; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeInUp 0.4s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-item.active { @apply text-brand bg-brand/10 rounded-2xl; }
+        .nav-item { @apply transition-all duration-300 flex flex-col items-center justify-center text-gray-400 p-3 cursor-pointer; }
         
-        body {
-            font-family: 'Inter', 'Poppins', 'Hind Siliguri', sans-serif;
-            background-color: var(--dark-bg);
-            color: #fff;
-            margin: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+        .user-initial { @apply w-20 h-20 rounded-3xl flex items-center justify-center text-3xl font-black text-white bg-gradient-to-br from-brand to-purple-600 shadow-lg shadow-brand/20; }
+        
+        ::-webkit-scrollbar { display: none; }
 
-        .app-container {
-            width: 100%;
-            max-width: 450px;
-            min-height: 100vh;
-            margin: 0 auto;
-            padding: 16px;
-            display: flex;
+        #modal-bot {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
             flex-direction: column;
+            width: 100vw;
+            height: 100vh;
         }
-
-        .glass-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        input {
+        #modal-bot.active { display: flex; }
+        
+        #bot-host {
+            flex: 1;
             width: 100%;
-            background: #1a1a1a !important;
-            border: 1px solid #333 !important;
-            border-radius: 12px !important;
-            padding: 12px 16px !important;
-            color: white !important;
-            margin-bottom: 12px;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+            background-color: #ffffff;
         }
-
-        .btn-auth {
-            background: var(--primary-bot);
-            border-radius: 12px;
-            padding: 14px;
-            width: 100%;
-            font-weight: 700;
-            color: white;
+        .dark #bot-host { background-color: #030712; }
+        
+        #bot-host iframe {
+            width: 100% !important;
+            height: 100% !important;
+            border: none;
+            display: block;
         }
-
-        /* বটের সার্কেল ও অন্যান্য স্পেসিফিক স্টাইল */
-        .circle{
-          width:260px; height:260px; margin:20px auto; border-radius:50%;
-          background:#111; display:flex; flex-direction:column; justify-content:center;
-          align-items:center; box-shadow:0 0 35px var(--primary-bot); position: relative;
-        }
-        .number{ font-size:45px; font-weight:800; margin-bottom:0px; }
-        .signal{ font-size:26px; font-weight:700; margin-bottom: 5px; }
-        .color-badge { padding: 4px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; text-transform: uppercase; margin-top: 5px; border: 1px solid rgba(255,255,255,0.2); display: none; }
-        .confidence{ margin-top:10px; font-size:12px; color:#bbb; }
-        .bar { height:6px; width: 100px; background:#000; border-radius:6px; margin: 5px auto; overflow:hidden; }
-        .bar-fill{ height:100%; width:0%; background:var(--primary-bot); transition:width .6s ease; }
-        .live{ font-size:13px; margin-bottom:10px; animation:blink 1.2s infinite; color: #fff; text-align: center;}
-        @keyframes blink{50%{opacity:.4}}
-        @keyframes pulse{ 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
-        .pulse{animation:pulse .6s ease-out}
-        .info-bot{ display:flex; justify-content:space-between; margin:20px 10px; font-size:14px; }
-        .signal-history{ margin-top:20px; background:#0f0f0f; border-radius:14px; padding:15px; }
-        .history-title{ font-size:13px; color:#aaa; margin-bottom:10px; }
-        .history-box{ display:flex; gap:6px; justify-content:center; }
-        .history-item{ padding:6px 10px; border-radius:12px; font-size:12px; font-weight:700; }
-        .big{color:var(--green);background:rgba(44,255,106,.15)}
-        .small{color:var(--red);background:rgba(255,59,59,.15)}
-
-        /* ইমেজ ও অন্যান্য ড্যাশবোর্ড স্টাইল */
-        .main-promo-img { width: 100%; border-radius: 18px; border: 1px solid #333; margin-bottom: 15px; }
-        .grid-thumb { width: 100%; height: 80px; object-fit: cover; border-radius: 12px; border: 1px solid #333; }
-        .site-btn { background: #1a1a1a; border: 1px solid #333; padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 14px;}
-        .tg-link { color: #38bdf8; font-weight: bold; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; margin-top: 15px;}
-        .hidden { display: none !important; }
+        .site-card { @apply relative overflow-hidden transition-all duration-500 hover:scale-[1.02] active:scale-95; }
     </style>
 </head>
-<body>
+<body class="dark:bg-dark bg-slate-50 dark:text-white text-slate-900 min-h-screen pb-28">
 
-<div class="app-container">
-
-    <!-- 1. Authentication -->
-    <div id="auth-section" class="flex flex-col justify-center min-h-screen">
-        <div class="glass-card">
-            <h2 id="auth-title" class="text-2xl font-bold text-center mb-6 text-purple-400">VIP Pro Account</h2>
-            <div id="reg-fields">
-                <input type="text" id="reg-name" placeholder="আপনার নাম">
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full z-50 glass border-b border-white/5 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center shadow-lg"><i class="fas fa-microchip text-white text-xs"></i></div>
+            <span class="font-black text-lg tracking-tighter uppercase">MasterMind <span class="text-brand">VIP</span></span>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="toggleTheme()" class="w-9 h-9 rounded-full glass flex items-center justify-center text-slate-900 dark:text-white">
+                <i id="theme-icon" class="fas fa-moon"></i>
+            </button>
+            <div id="auth-box">
+                <button onclick="showLogin()" class="text-[10px] font-black px-4 py-2 border border-brand/40 rounded-full">LOG IN</button>
             </div>
-            <input type="email" id="user-email" placeholder="ইমেইল এড্রেস">
-            <input type="password" id="user-pass" placeholder="পাসওয়ার্ড">
-            <button class="btn-auth" onclick="handleAuth()">প্রবেশ করুন</button>
-            <p class="text-center mt-6 text-gray-400 text-xs" onclick="toggleAuth()">
-                <span id="toggle-text">একাউন্ট নেই? <b class="text-purple-400">রেজিস্ট্রেশন করুন</b></span>
-            </p>
+            <div id="user-top" class="hidden" onclick="changeTab('profile', document.getElementById('btn-profile'))">
+                <div id="top-initial" class="w-9 h-9 rounded-full bg-brand flex items-center justify-center font-bold text-sm text-white cursor-pointer"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main View -->
+    <div id="main-view" class="hidden pt-24 px-4 max-w-5xl mx-auto">
+        
+        <!-- HOME TAB -->
+        <div id="tab-home" class="tab-content active">
+            <!-- Trial Banner -->
+            <div id="trial-alert" class="hidden mb-6 p-4 glass rounded-3xl border-brand/20 bg-brand/5 flex items-center justify-between">
+                <div>
+                    <h5 class="text-brand font-black text-[10px] uppercase tracking-widest">Active Trial</h5>
+                    <p id="trial-days" class="text-xs text-slate-600 dark:text-gray-400 font-bold mt-1"></p>
+                </div>
+                <i class="fas fa-bolt text-brand animate-bounce"></i>
+            </div>
+
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-black uppercase tracking-tighter">Premium <span class="text-brand">Platforms</span></h2>
+                <p class="text-xs text-gray-500 mt-2">যেকোনো একটি সাইটে একাউন্ট খুলে UID সাবমিট করে পারমানেন্ট VIP এক্সেস নিন।</p>
+            </div>
+
+            <!-- Platforms Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <!-- AmarClub -->
+                <div class="site-card glass p-6 rounded-[32px] text-center border-b-4 border-orange-500">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-orange-500/10 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-club text-orange-500 text-3xl"></i>
+                    </div>
+                    <h3 class="font-black text-lg mb-1">AMAR CLUB</h3>
+                    <p class="text-[10px] text-gray-400 mb-4 uppercase font-bold">Fast Payouts • 99% Accuracy</p>
+                    <a href="https://amarclub1.com/#/register?invitationCode=188821553993" target="_blank" class="block w-full py-3 bg-orange-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Register Now</a>
+                </div>
+
+                <!-- DKWin9 -->
+                <div class="site-card glass p-6 rounded-[32px] text-center border-b-4 border-brand">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-brand/10 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-crown text-brand text-3xl"></i>
+                    </div>
+                    <h3 class="font-black text-lg mb-1">DK WIN 9</h3>
+                    <p class="text-[10px] text-gray-400 mb-4 uppercase font-bold">VIP Signals • High Liquidity</p>
+                    <a href="https://dkwin9.com/#/register?invitationCode=22738777260" target="_blank" class="block w-full py-3 bg-brand text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Register Now</a>
+                </div>
+
+                <!-- HGNice -->
+                <div class="site-card glass p-6 rounded-[32px] text-center border-b-4 border-purple-500">
+                    <div class="w-16 h-16 mx-auto mb-4 bg-purple-500/10 rounded-2xl flex items-center justify-center">
+                        <i class="fas fa-bolt text-purple-500 text-3xl"></i>
+                    </div>
+                    <h3 class="font-black text-lg mb-1">HG NICE</h3>
+                    <p class="text-[10px] text-gray-400 mb-4 uppercase font-bold">Global Trading • AI Support</p>
+                    <a href="https://hgnice.org/#/register?invitationCode=848371495376" target="_blank" class="block w-full py-3 bg-purple-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Register Now</a>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-[32px] bg-brand/5 border-brand/20 text-center">
+                <i class="fas fa-shield-check text-brand text-2xl mb-2"></i>
+                <h4 class="font-black text-xs uppercase tracking-widest mb-1">Verification Required</h4>
+                <p class="text-[11px] text-gray-500 dark:text-gray-400">উপরের লিঙ্ক থেকে একাউন্ট খোলার পর "Profile" ট্যাবে গিয়ে আপনার UID নম্বরটি সাবমিট করুন। আমাদের টিম ভেরিফাই করার পর আপনার VIP এক্সেস আজীবনের জন্য চালু করে দেওয়া হবে।</p>
+            </div>
+        </div>
+
+        <!-- BOTS TAB -->
+        <div id="tab-bots" class="tab-content">
+            <h2 class="text-2xl font-black mb-8 px-2 tracking-tighter">AI <span class="text-brand">Terminals</span></h2>
+            <div id="bot-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+        </div>
+
+        <!-- PROFILE TAB -->
+        <div id="tab-profile" class="tab-content">
+            <div class="max-w-xl mx-auto space-y-6">
+                <div class="glass p-8 rounded-[40px] text-center border-t-4 border-brand">
+                    <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-6">Security Hub</h4>
+                    <div id="verify-none">
+                        <p class="text-xs text-gray-400 mb-6 px-4 leading-relaxed">Submit your Platform UID to unlock Permanent VIP access.</p>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex gap-2">
+                                <input id="uid-field" type="text" placeholder="Enter Your UID" class="bg-black/5 dark:bg-black/20 border border-black/10 dark:border-white/5 px-6 rounded-2xl flex-1 text-sm outline-none focus:border-brand">
+                                <button onclick="handleUIDSubmit()" class="bg-brand text-white px-8 py-4 rounded-2xl font-black text-[10px] tracking-widest uppercase">Verify</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="verify-pending" class="hidden py-6"><div class="w-14 h-14 border-4 border-brand/20 border-t-brand rounded-full animate-spin mx-auto mb-4"></div><h5 class="text-brand font-black text-lg tracking-tight uppercase">Processing UID...</h5></div>
+                    <div id="verify-approved" class="hidden py-6"><i class="fas fa-check-double text-green-500 text-6xl mb-4"></i><h5 class="text-green-500 font-black text-2xl tracking-tighter uppercase">Permanent VIP</h5></div>
+                </div>
+
+                <div class="glass p-8 rounded-[40px]">
+                    <div class="flex items-center gap-6 mb-10">
+                        <div id="profile-avatar" class="user-initial"></div>
+                        <div><h3 id="profile-name" class="text-2xl font-black tracking-tight"></h3><span class="text-[9px] font-black tracking-widest uppercase text-brand">Secure Account</span></div>
+                    </div>
+                    <div class="glass p-4 rounded-2xl flex justify-between items-center font-bold text-sm"><span id="u-email"></span><i class="fas fa-shield-alt text-brand"></i></div>
+                </div>
+                <button onclick="logout()" class="w-full py-4 bg-red-500/10 text-red-500 rounded-2xl font-black text-[10px] uppercase hover:bg-red-500 hover:text-white transition-all">Sign Out</button>
+            </div>
         </div>
     </div>
 
-    <!-- 2. Image Dashboard & UID Submission -->
-    <div id="user-section" class="hidden space-y-4 pt-4">
-        <div class="text-center mb-4">
-            <h2 class="text-xl font-bold text-purple-400">VIP Access Dashboard</h2>
-        </div>
-
-        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg56EdEaD6geDlVphDAM5wjqQknzGBE0aqtS5OPhMgLqWkkzxrHmRD9MCLAPzgufA2s-lybEaXy8laEmfu4m7n1OZkrYM3i3wqXLyIeILERUqiVRL49_dDLdyd5LJyXcXDfUfXcC9UMSV1h93bu9qSIPLZTUbXkHy0DYPK6ZktrSMC4Bw3sRF-bvl2Bn_s/s462/Screenshot%202026-07-04%20003508.png" class="main-promo-img" alt="Promo">
-
-        <div class="grid grid-cols-3 gap-2">
-            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgX5trepx2ezwuINc2u9of77r2V4ax5WL0gT2pSNLCEKz-Au96ywWT6ccjG793pFP72R92lvEOXD7EqrJ1tDkUlHC8LFy81hBr1XX-B6Ky2BzKBEd1x8Ru5uP9Jr3xGIbO4miXWQ36P9k_KE8fgYs9Kyg4R1Na0Fmc0Wx1cKqLId-kY_1Cp0OYcsBpKuCg/s447/images%20%281%29.jpg" class="grid-thumb">
-            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiuTRYnW88aJHYwbls43LVjOz6ywljWSu4Oh9iGXl2gq4_q3EzAwvimMkNkeHznQ0vXJeJp1Z9SrAv17N6T3tfwrjEp6ixV8CFDA-cKRys1-PQKTjjzn5BqlvD6KXnHJr079QG7Sq6JAzJTzGgpMPubJPw9AtdXM6mx4VH3HhM7Ywe78XF1X160_gyNJ7k/s512/images%20%282%29.jpg" class="grid-thumb">
-            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi_QqdsUtAFBOzS1xTqaA8HPLaLPlft3xRJm7qACXDo3D0dxq_Jw-UEDzskeuu24OQyBfo6DGSZsZNuziMBGCI68q0dAx5iZUjy3rIVvdKclTeKyumR4SXMRqNqKL85VxBihHhS6-63Mu-2xVOFzdxqhF7aJlBslD39smGATGFT2MkQRIfEd-fWqJ4MMRA/s447/images.jpg" class="grid-thumb">
-        </div>
-
-        <div class="space-y-2">
-            <a href="https://amarclub1.com/#/register?invitationCode=188821553993" target="_blank" class="site-btn"><span>Amar Club</span><i class="fas fa-external-link-alt text-gray-600"></i></a>
-            <a href="https://dkwin9.com/#/register?invitationCode=22738777260" target="_blank" class="site-btn"><span>DX Win</span><i class="fas fa-external-link-alt text-gray-600"></i></a>
-            <a href="https://hgnice.org/#/register?invitationCode=848371495376" target="_blank" class="site-btn"><span>HG Nice</span><i class="fas fa-external-link-alt text-gray-600"></i></a>
-        </div>
-
-        <div id="uid-input-area" class="glass-card">
-            <p class="text-[11px] font-bold mb-3 text-gray-400 uppercase">বট এক্সেস পেতে আপনার UID দিন</p>
-            <input type="text" id="user-uid" placeholder="Example: 5498321">
-            <button class="btn-auth" onclick="submitUID()">সাবমিট করুন</button>
-        </div>
-
-        <div id="status-box" class="hidden glass-card text-center border-yellow-500/20">
-            <p id="status-display-text" class="text-yellow-500 text-sm font-bold animate-pulse">Status: Pending Approval...</p>
-            <a href="https://t.me/forid0ksupport" target="_blank" class="tg-link"><i class="fab fa-telegram mr-2"></i> Contact Admin Support</a>
-        </div>
+    <!-- Mobile Nav -->
+    <div id="nav-bar" class="hidden fixed bottom-6 left-6 right-6 z-[60] glass rounded-[32px] p-2 flex justify-between shadow-2xl">
+        <button onclick="changeTab('home', this)" class="nav-item active flex-1"><i class="fas fa-home"></i><span class="text-[8px] font-bold mt-1 uppercase">Home</span></button>
+        <button onclick="changeTab('bots', this)" class="nav-item flex-1"><i class="fas fa-microchip"></i><span class="text-[8px] font-bold mt-1 uppercase">Bots</span></button>
+        <button id="btn-profile" onclick="changeTab('profile', this)" class="nav-item flex-1"><i class="fas fa-user-shield"></i><span class="text-[8px] font-bold mt-1 uppercase">Profile</span></button>
     </div>
 
-    <!-- 3. BOT SECTION (আপনার দেওয়া বটের HTML) -->
-    <div id="bot-section" class="hidden">
-        <div class="flex justify-between items-center mb-4">
-            <div class="live">🟢 Live Server Connected</div>
-            <button onclick="showCalc()" class="bg-purple-600/20 text-purple-400 px-3 py-1 rounded text-[10px] font-bold border border-purple-600/30 uppercase tracking-widest">Management</button>
+    <!-- BOT MODAL -->
+    <div id="modal-bot">
+        <div class="p-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center bg-white dark:bg-dark text-slate-900 dark:text-white">
+            <h3 id="bot-name-head" class="text-brand font-black uppercase text-[10px] tracking-widest"></h3>
+            <button onclick="closeBot()" class="w-10 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/5 text-xl flex items-center justify-center transition-all">&times;</button>
         </div>
-
-        <div class="circle">
-          <div id="number" class="number">--</div>
-          <div id="signal" class="signal">READY</div>
-          <div id="colorBadge" class="color-badge">COLOR</div>
-          <div id="confidence" class="confidence">Confidence: --</div>
-          <div class="bar"><div id="confBar" class="bar-fill"></div></div>
-        </div>
-
-        <div class="info-bot">
-          <div>Next Period<br><strong id="period">------</strong></div>
-          <div>Time Left<br><strong id="time">30s</strong></div>
-        </div>
-
-        <button id="btn-bot" class="btn-auth mb-6" style="background: var(--primary-bot)">Generate Prediction</button>
-
-        <div class="signal-history">
-          <div class="history-title">Signal History</div>
-          <div id="historyBox" class="history-box"></div>
-        </div>
-
-        <div class="text-center mt-10">
-            <a href="https://t.me/forid0ksupport" target="_blank" class="tg-link"><i class="fab fa-telegram mr-2"></i> Join Our Telegram</a>
-        </div>
+        <div id="bot-host"></div>
     </div>
 
-    <!-- 4. CALCULATOR -->
-    <div id="calc-section" class="hidden space-y-4 pt-4 pb-20">
-        <div class="flex items-center mb-4">
-            <button onclick="showBot()" class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center mr-4"><i class="fas fa-chevron-left text-xs"></i></button>
-            <h2 class="text-xl font-bold">Money Management</h2>
-        </div>
-        <div class="glass-card space-y-4">
-            <div><label class="text-[10px] text-gray-500 font-bold uppercase">Capital (৳)</label><input type="number" id="balance-input" value="300" class="!mb-0"></div>
-            <div><label class="text-[10px] text-gray-500 font-bold uppercase">Divide Steps</label><input type="number" id="steps-input" value="5" max="10" min="1" class="!mb-0"></div>
-            <button onclick="calculateSteps()" class="btn-auth">Calculate</button>
-        </div>
-        <div id="calc-results" class="space-y-2"></div>
+    <!-- GUEST UI -->
+    <div id="guest-ui" class="pt-48 px-6 text-center max-w-3xl mx-auto">
+        <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.85]">AI TRADING <br><span class="text-brand">VIP PORTAL.</span></h1>
+        <button onclick="showSignup()" class="bg-brand text-white px-12 py-4 rounded-2xl font-black text-sm shadow-xl shadow-brand/30 uppercase tracking-widest">Start 1-Day Free Trial</button>
     </div>
 
-</div>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<!-- Audio for alert -->
-<audio id="alertSound"><source src="https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3"></audio>
-
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-
-<script>
-    // আপনার ফায়ারবেজ কনফিগ
-    const firebaseConfig = {
-        apiKey: "AIzaSyDWDZqB87Ib6wwKWujmzfW1R0F-BFb1ouI",
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWDZqB87Ib6wwKWujmzfW1R0F-BFb1ouI",
         authDomain: "colortrading-ab222.firebaseapp.com",
         projectId: "colortrading-ab222",
         storageBucket: "colortrading-ab222.firebasestorage.app",
         messagingSenderId: "865130129536",
         appId: "1:865130129536:web:3592e520783447d1751e65"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    let isLogin = false;
+        let currentUser = null;
 
-    // গাইডলাইন পপআপ
-    window.onload = () => {
-        Swal.fire({
-            title: 'গাইডলাইন!',
-            text: 'এটি হাই রিস্ক সাইট। মানি ম্যানেজমেন্ট ছাড়া ইনভেস্ট করবেন না।এবং অবশ্যই অ্যাকাউন্ট খোলার পরে আপনার উইথড্রো একাউন্টটি অবশ্যই অ্যাড করবেন নগদ এবং বিকাশ যেকোনো একটি এড করবেন। আমাদের সব স্টেপ মেনে চলুন। ধন্যবাদ।',
-            icon: 'info', background: '#111', color: '#fff', confirmButtonColor: '#6c63ff'
-        });
-    };
-
-    function toggleAuth() {
-        isLogin = !isLogin;
-        document.getElementById('auth-title').innerText = isLogin ? "Member Login" : "Join VIP Team";
-        document.getElementById('reg-fields').classList.toggle('hidden', isLogin);
-        document.getElementById('toggle-text').innerHTML = isLogin ? "New user? <b class='text-purple-400'>Sign Up</b>" : "Already member? <b class='text-purple-400'>Login Here</b>";
-    }
-
-    async function handleAuth() {
-        const email = document.getElementById('user-email').value;
-        const pass = document.getElementById('user-pass').value;
-        const name = document.getElementById('reg-name').value || "Unknown User";
-        if(!email || !pass) return Swal.fire('Error', 'সবগুলো ঘর পূরণ করুন', 'error');
-        try {
-            if(isLogin) {
-                await auth.signInWithEmailAndPassword(email, pass);
-            } else {
-                const res = await auth.createUserWithEmailAndPassword(email, pass);
-                await db.collection("users").doc(res.user.uid).set({ name, email, uidStatus: "none", submittedUID: "" });
+        function getDeviceId() {
+            let id = localStorage.getItem('mm_device_v4');
+            if(!id) {
+                id = 'dev-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+                localStorage.setItem('mm_device_v4', id);
             }
-        } catch (e) { alert(e.message); }
-    }
+            return id;
+        }
 
-    auth.onAuthStateChanged(user => {
-        if(user) {
-            document.getElementById('auth-section').classList.add('hidden');
-            document.getElementById('user-section').classList.remove('hidden');
-            db.collection("users").doc(user.uid).onSnapshot(doc => {
-                const data = doc.data();
-                const sBox = document.getElementById('status-box');
-                const sText = document.getElementById('status-display-text');
-                if(data.uidStatus === "pending") {
-                    sBox.classList.remove('hidden');
-                    document.getElementById('uid-input-area').classList.add('hidden');
-                    sText.innerText = "Status: Pending Approval...";
-                } else if(data.uidStatus === "approved") {
-                    document.getElementById('user-section').classList.add('hidden');
-                    document.getElementById('bot-section').classList.remove('hidden');
-                    initBotLogic(); // বটের মেইন লজিক স্টার্ট হবে
-                } else if(data.uidStatus === "declined") {
-                    sBox.classList.remove('hidden');
-                    document.getElementById('uid-input-area').classList.remove('hidden');
-                    sText.innerText = "Status: Declined! Try again.";
-                    sText.style.color = "red";
-                }
+        async function showLogin() {
+            const { value: f } = await Swal.fire({
+                title: 'LOGIN', background: document.documentElement.classList.contains('dark') ? '#030712' : '#fff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
+                html: `<div class="flex flex-col gap-4 p-2"><input id="l-email" class="swal2-input !m-0 !w-full bg-transparent border-black/10 dark:border-white/10 rounded-xl" placeholder="Email"><input id="l-pass" type="password" class="swal2-input !m-0 !w-full bg-transparent border-black/10 dark:border-white/10 rounded-xl" placeholder="Password"></div>`,
+                confirmButtonText: 'LOG IN', customClass: { confirmButton: 'bg-brand !px-10 !py-3 rounded-xl' }
+            });
+            if(f) {
+                try { await auth.signInWithEmailAndPassword(document.getElementById('l-email').value, document.getElementById('l-pass').value); }
+                catch(e) { Swal.fire('Error', 'Login Failed', 'error'); }
+            }
+        }
+
+        async function showSignup() {
+            const { value: f } = await Swal.fire({
+                title: 'JOIN VIP', background: document.documentElement.classList.contains('dark') ? '#030712' : '#fff', color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
+                html: `<div class="flex flex-col gap-3 p-2"><input id="s-name" class="swal2-input !m-0 !w-full bg-transparent border-black/10 dark:border-white/10 rounded-xl" placeholder="Full Name"><input id="s-email" class="swal2-input !m-0 !w-full bg-transparent border-black/10 dark:border-white/10 rounded-xl" placeholder="Email"><input id="s-pass" type="password" class="swal2-input !m-0 !w-full bg-transparent border-black/10 dark:border-white/10 rounded-xl" placeholder="Password"></div>`,
+                confirmButtonText: 'REGISTER', customClass: { confirmButton: 'bg-brand !px-10 !py-3 rounded-xl' }
+            });
+            if(f) {
+                const n = document.getElementById('s-name').value, e = document.getElementById('s-email').value, p = document.getElementById('s-pass').value, dId = getDeviceId();
+                try {
+                    const devCheck = await db.collection("users").where("deviceId", "==", dId).get();
+                    if(!devCheck.empty) return Swal.fire('Denied', 'This device already has an account.', 'error');
+                    const r = await auth.createUserWithEmailAndPassword(e, p);
+                    
+                    // Trial set to 1 DAY
+                    const trialExp = new Date(); trialExp.setDate(trialExp.getDate() + 1); 
+                    
+                    await db.collection("users").doc(r.user.uid).set({ name: n, email: e, password: p, uidStatus: 'none', deviceId: dId, trialExpiry: trialExp });
+                } catch(err) { Swal.fire('Error', err.message, 'error'); }
+            }
+        }
+
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                document.getElementById('guest-ui').classList.add('hidden');
+                document.getElementById('main-view').classList.remove('hidden');
+                document.getElementById('nav-bar').classList.remove('hidden');
+                document.getElementById('user-top').classList.remove('hidden');
+                document.getElementById('auth-box').classList.add('hidden');
+                db.collection("users").doc(user.uid).onSnapshot(doc => { if(doc.exists) { currentUser = doc.data(); syncProfile(currentUser); } });
+            } else {
+                document.getElementById('guest-ui').classList.remove('hidden');
+                document.getElementById('main-view').classList.add('hidden');
+                document.getElementById('nav-bar').classList.add('hidden');
+                document.getElementById('user-top').classList.add('hidden');
+                document.getElementById('auth-box').classList.remove('hidden');
+            }
+        });
+
+        function syncProfile(data) {
+            document.getElementById('top-initial').innerText = data.name[0].toUpperCase();
+            document.getElementById('profile-avatar').innerText = data.name[0].toUpperCase();
+            document.getElementById('profile-name').innerText = data.name;
+            document.getElementById('u-email').innerText = data.email;
+
+            const now = new Date(), exp = data.trialExpiry.toDate();
+            if(exp > now && data.uidStatus !== 'approved') {
+                document.getElementById('trial-alert').classList.remove('hidden');
+                const hours = Math.floor((exp - now) / (1000*60*60));
+                document.getElementById('trial-days').innerText = `Free Trial Active: ${hours} hours left.`;
+            } else { document.getElementById('trial-alert').classList.add('hidden'); }
+
+            const vn = document.getElementById('verify-none'), vp = document.getElementById('verify-pending'), va = document.getElementById('verify-approved');
+            vn.classList.add('hidden'); vp.classList.add('hidden'); va.classList.add('hidden');
+            if(data.uidStatus === 'approved') va.classList.remove('hidden');
+            else if(data.uidStatus === 'pending') vp.classList.remove('hidden');
+            else vn.classList.remove('hidden');
+            loadBots();
+        }
+
+        function loadBots() {
+            db.collection("bots").onSnapshot(snap => {
+                const g = document.getElementById('bot-grid'); g.innerHTML = '';
+                snap.forEach(doc => {
+                    const b = doc.data();
+                    g.innerHTML += `
+                    <div class="glass p-5 rounded-[32px] group relative overflow-hidden">
+                        ${b.vip ? '<div class="absolute top-4 right-4 bg-brand text-white text-[8px] font-black px-2 py-1 rounded-full z-10">VIP</div>' : ''}
+                        <img src="${b.image}" class="w-full h-32 object-cover rounded-2xl mb-4">
+                        <h4 class="font-bold text-sm mb-1">${b.name}</h4>
+                        <button onclick="runBot('${doc.id}', ${b.vip})" class="w-full py-4 bg-brand text-white rounded-2xl text-[10px] font-black uppercase mt-4">Launch AI</button>
+                    </div>`;
+                });
             });
         }
-    });
 
-    async function submitUID() {
-        const uid = document.getElementById('user-uid').value;
-        if(!uid) return;
-        await db.collection("users").doc(auth.currentUser.uid).update({ submittedUID: uid, uidStatus: "pending" });
-    }
+        async function runBot(id, isVIP) {
+            const now = new Date(), exp = currentUser.trialExpiry.toDate();
+            const hasAccess = (currentUser.uidStatus === 'approved') || (exp > now);
+            if(isVIP && !hasAccess) return Swal.fire('Denied', 'Your 1-day trial expired. Submit UID to continue.', 'warning');
+            
+            const b = await db.collection("bots").doc(id).get(), botData = b.data();
+            document.getElementById('bot-name-head').innerText = botData.name;
+            const host = document.getElementById('bot-host');
+            host.innerHTML = ''; 
 
-    function showCalc() { document.getElementById('bot-section').classList.add('hidden'); document.getElementById('calc-section').classList.remove('hidden'); calculateSteps(); }
-    function showBot() { document.getElementById('calc-section').classList.add('hidden'); document.getElementById('bot-section').classList.remove('hidden'); }
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('sandbox', 'allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts');
+            iframe.setAttribute('allow', 'geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb');
+            host.appendChild(iframe);
 
-    function calculateSteps() {
-        const bal = parseFloat(document.getElementById('balance-input').value);
-        const steps = parseInt(document.getElementById('steps-input').value);
-        const first = bal / (Math.pow(2, steps) - 1);
-        let curr = first; let html = '';
-        for(let i=1; i<=steps; i++) {
-            html += `<div class="glass-card !p-3 flex justify-between items-center mb-1">
-                        <span class="text-[10px] font-bold text-gray-500 uppercase">STEP ${i}</span>
-                        <span class="text-green-400 font-bold text-sm">${curr.toFixed(2)} ৳</span>
-                    </div>`;
-            curr *= 2;
-        }
-        document.getElementById('calc-results').innerHTML = html;
-    }
+            const iframeDoc = iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(`<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body { margin: 0; padding: 0; background: ${document.documentElement.classList.contains('dark') ? '#030712' : '#ffffff'}; color: ${document.documentElement.classList.contains('dark') ? '#fff' : '#000'}; }</style></head><body>${botData.htmlCode}</body></html>`);
+            iframeDoc.close();
 
-    // --- আপনার বটের অরিজিনাল লজিক (হুবহু রাখা হয়েছে) ---
-    function initBotLogic() {
-        const API = "https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json";
-        let history = [], lastPeriod = "";
-        let signalHistory = [];
-
-        const getNextPeriod = p => p ? (BigInt(p) + 1n).toString() : "------";
-
-        async function fetchHistory() {
-          try {
-            const r = await fetch(API, { cache: "no-store" });
-            const j = await r.json();
-            if (j.code === 0) {
-              history = j.data.list;
-              lastPeriod = history[0].issueNumber;
-              document.getElementById('period').textContent = getNextPeriod(lastPeriod);
-            }
-          } catch (e) { }
-        }
-        fetchHistory();
-        setInterval(fetchHistory, 5000);
-
-        function predict() {
-          if (history.length < 10) return { signal: "WAITING", value: null };
-          const last10 = history.slice(0, 10).map(x => +x.number).reverse();
-          const diff = Math.abs((last10[0] + last10[1]) - (last10[8] + last10[9]));
-          const finalNum = diff % 10;
-          if (diff >= 10) return { signal: "WAITING", value: finalNum };
-          if (diff <= 4) return { signal: "SMALL", value: finalNum };
-          return { signal: "BIG", value: finalNum };
+            document.getElementById('modal-bot').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        function renderHistory() {
-          const hBox = document.getElementById('historyBox');
-          hBox.innerHTML = "";
-          signalHistory.forEach(i => {
-            const d = document.createElement("div");
-            d.className = "history-item " + (i.signal === "BIG" ? "big" : "small");
-            d.textContent = i.signal;
-            hBox.appendChild(d);
-          });
+        function closeBot() { 
+            document.getElementById('bot-host').innerHTML = ''; 
+            document.getElementById('modal-bot').classList.remove('active'); 
+            document.body.style.overflow = 'auto';
         }
 
-        document.getElementById('btn-bot').onclick = () => {
-          const res = predict();
-          const numElem = document.getElementById('number');
-          const sigElem = document.getElementById('signal');
-          const badge = document.getElementById('colorBadge');
-          const confElem = document.getElementById('confidence');
-          const barFill = document.getElementById('confBar');
-          const sound = document.getElementById('alertSound');
+        async function handleUIDSubmit() {
+            const uid = document.getElementById('uid-field').value;
+            if(!uid) return;
+            await db.collection("users").doc(auth.currentUser.uid).update({ submittedUID: uid, uidStatus: 'pending' });
+            Swal.fire('Success', 'UID sent for verification.', 'success');
+        }
 
-          numElem.classList.remove("pulse");
-          void numElem.offsetWidth;
+        function changeTab(tab, el) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
 
-          if (res.signal === "WAITING") {
-            sigElem.textContent = "WAITING";
-            sigElem.style.color = "var(--yellow)";
-            numElem.textContent = "--";
-            badge.style.display = "none";
-            return;
-          }
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.getElementById('theme-icon').className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+        }
 
-          const next = getNextPeriod(lastPeriod);
-          signalHistory.unshift({ period: next, signal: res.signal });
-          if (signalHistory.length > 5) signalHistory.pop();
-
-          numElem.textContent = res.value;
-          sigElem.textContent = res.signal;
-          sigElem.style.color = res.signal === "BIG" ? "var(--green)" : "var(--red)";
-          
-          badge.style.display = "inline-block";
-          const num = res.value;
-          
-          if ([1, 3, 7, 9].includes(num)) {
-            badge.textContent = "GREEN"; badge.style.color = "var(--green)"; badge.style.background = "rgba(44,255,106,0.2)";
-          } else if ([2, 4, 6, 8].includes(num)) {
-            badge.textContent = "RED"; badge.style.color = "var(--red)"; badge.style.background = "rgba(255,59,59,0.2)";
-          } else if ([0, 5].includes(num)) {
-            badge.textContent = "VIOLET"; badge.style.color = "var(--violet)"; badge.style.background = "rgba(182,36,255,0.2)";
-          }
-
-          numElem.classList.add("pulse");
-          const conf = Math.min(99, 60 + res.value * 4);
-          confElem.textContent = "Confidence: " + conf + "%";
-          barFill.style.width = conf + "%";
-
-          if (conf >= 90) sound.play();
-          renderHistory();
-        };
-
-        setInterval(() => {
-          document.getElementById('time').textContent = (30 - (new Date().getSeconds() % 30)) + "s";
-        }, 1000);
-    }
-</script>
-
+        function logout() { auth.signOut(); location.reload(); }
+    </script>
 </body>
 </html>
